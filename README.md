@@ -60,3 +60,8 @@ How to Use this library
             android:enabled="true"
             android:stopWithTask="false"
             />
+			
+			
+			
+			 Add in module level build.gradle dependancy
+			 implementation 'com.google.android.gms:play-services-location:11.0.0'

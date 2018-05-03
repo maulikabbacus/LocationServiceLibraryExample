@@ -1,12 +1,16 @@
 package abbacus.locationlibrary.demo;
 
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.location.Location;
 import android.location.LocationManager;
 import android.preference.PreferenceManager;
 import android.support.design.widget.Snackbar;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -24,6 +28,7 @@ import android.support.v4.app.ActivityCompat;
 
 import android.view.View;
 import android.widget.Button;
+import android.widget.Toast;
 
 import abbacus.locationlibrary.LocationUpdateServiceBackground;
 
@@ -63,7 +68,7 @@ public class MainActivity extends AppCompatActivity implements
 //    private LocationUpdateServiceBackground mServiceBG = null;
     // Tracks the bound state of the service.
     private boolean mBound = false;
-
+    private MyReceiver myReceiver;
     // UI elements.
     private Button mRequestLocationUpdatesButton;
     private Button mRemoveLocationUpdatesButton;
@@ -84,12 +89,23 @@ public class MainActivity extends AppCompatActivity implements
 //            mBound = false;
 //        }
 //    };
-
+    private class MyReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Location location = intent.getParcelableExtra(LocationUpdateServiceBackground.EXTRA_LOCATION);
+            if (location != null) {
+                Toast.makeText(MainActivity.this,""+ location.getLatitude(),
+                        Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+//       myReceiver = new MyReceiver();
         setContentView(R.layout.activity_main);
+        Intent ina =new Intent(MainActivity.this,locationReceiverService.class);
+        startService(ina);
     }
 
     @Override
@@ -123,6 +139,7 @@ public class MainActivity extends AppCompatActivity implements
                 mRequestLocationUpdatesButton.setEnabled(true);
                 mRemoveLocationUpdatesButton.setEnabled(false);
                 Intent ina=new Intent(MainActivity.this,LocationUpdateServiceBackground.class);
+
                 stopService(ina);
 
             }
@@ -141,7 +158,7 @@ public class MainActivity extends AppCompatActivity implements
     protected void onResume() {
         super.onResume();
 //        LocalBroadcastManager.getInstance(this).registerReceiver(myReceiver,
-//                new IntentFilter(LocationUpdatesService.ACTION_BROADCAST));
+//                new IntentFilter(LocationUpdateServiceBackground.ACTION_BROADCAST));
     }
 
     @Override
@@ -253,6 +270,8 @@ public class MainActivity extends AppCompatActivity implements
             mRequestLocationUpdatesButton.setEnabled(false);
             mRemoveLocationUpdatesButton.setEnabled(true);
             Intent ina = new Intent(MainActivity.this, LocationUpdateServiceBackground.class);
+            ina.putExtra("updateTimeInterval",1000l);
+            ina.putExtra("updateDistance",0.01f);
             startService(ina);
 
         }else
@@ -280,7 +299,6 @@ public class MainActivity extends AppCompatActivity implements
         return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
     }
     /**
-     * Receiver for broadcasts sent by {@link LocationUpdatesService}.
      */
 //    private class MyReceiver extends BroadcastReceiver {
 //        @Override

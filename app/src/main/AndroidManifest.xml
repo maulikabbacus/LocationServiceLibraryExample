@@ -26,6 +26,13 @@
             android:enabled="true"
             android:stopWithTask="false"
             />
+        <service
+            android:name="abbacus.locationlibrary.demo.locationReceiverService"
+            android:enabled="true"
+            android:exported="true"
+
+            android:stopWithTask="false"
+            />
 
     </application>
 

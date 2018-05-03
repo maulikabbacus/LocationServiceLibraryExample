@@ -9,6 +9,7 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -24,13 +25,13 @@ import com.google.android.gms.tasks.Task;
 
 public class LocationUpdateServiceBackground extends Service {
     private static final String TAG = LocationUpdateServiceBackground.class.getSimpleName();
-    private static final long UPDATE_INTERVAL_IN_MILLISECONDS = 1000;
-    private static final float UPDATE_INTERVAL_IN_DISTANCE = 0.01f; //minimum distance for location update in meter
+    private static  long UPDATE_INTERVAL_IN_MILLISECONDS = 1000;
+    private static  float UPDATE_INTERVAL_IN_DISTANCE = 0.01f; //minimum distance for location update in meter
     /**
      * The fastest rate for active location updates. Updates will never be more frequent
      * than this value.
      */
-    private static final long FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS =
+    private static  long FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS =
             UPDATE_INTERVAL_IN_MILLISECONDS / 2;
     private LocationRequest mLocationRequest;
     private FusedLocationProviderClient mFusedLocationClient;
@@ -39,6 +40,11 @@ public class LocationUpdateServiceBackground extends Service {
     Context mContext;
 
     Task<LocationSettingsResponse> task;
+
+    private static final String PACKAGE_NAME =
+            "abbacus.locationlibrary";
+    public static final String ACTION_BROADCAST = PACKAGE_NAME + ".broadcast";
+    public static final String EXTRA_LOCATION = PACKAGE_NAME + ".location";
 
     @Nullable
     @Override
@@ -64,31 +70,12 @@ public class LocationUpdateServiceBackground extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         startLocationUpdates();
-//        mGnssStatusCallback = new GnssStatus.Callback()
-//        {
-//            @Override
-//            public void onStarted() {
-//                super.onStarted();
-//                Toast.makeText(LocationUpdateServiceBackground.this,"GPS Started",Toast.LENGTH_LONG).show();
-//            }
-//
-//            @Override
-//            public void onStopped() {
-//                super.onStopped();
-//                Toast.makeText(LocationUpdateServiceBackground.this,"GPS Stopped",Toast.LENGTH_LONG).show();
-//            }
-//
-//            @Override
-//            public void onFirstFix(int ttffMillis) {
-//                super.onFirstFix(ttffMillis);
-//            }
-//
-//            @Override
-//            public void onSatelliteStatusChanged(GnssStatus status) {
-//                super.onSatelliteStatusChanged(status);
-//            }
-//            // TODO: add your code here!
-//        };
+        if(intent!=null&&!intent.getExtras().isEmpty())
+        {
+            UPDATE_INTERVAL_IN_MILLISECONDS=intent.getLongExtra("updateTimeInterval",1000);
+            UPDATE_INTERVAL_IN_DISTANCE=intent.getFloatExtra("updateDistance",1f);
+            FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS=UPDATE_INTERVAL_IN_MILLISECONDS/2;
+        }
 
         return START_REDELIVER_INTENT;
     }
@@ -101,7 +88,7 @@ public class LocationUpdateServiceBackground extends Service {
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         mLocationRequest.setInterval(UPDATE_INTERVAL_IN_MILLISECONDS);
         mLocationRequest.setFastestInterval(FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS);
-//        mLocationRequest.setSmallestDisplacement(UPDATE_INTERVAL_IN_DISTANCE);
+        mLocationRequest.setSmallestDisplacement(UPDATE_INTERVAL_IN_DISTANCE);
 //        mLocationRequest.setSmallestDisplacement(UPDATE_INTERVAL_IN_DISTANCE);
 
         // Create LocationSettingsRequest object using location request
@@ -174,8 +161,11 @@ public class LocationUpdateServiceBackground extends Service {
         String msg = "Updated Location: " +
                 Double.toString(location.getLatitude()) + "," +
                 Double.toString(location.getLongitude());
-        Toast.makeText(mContext, msg, Toast.LENGTH_LONG).show();
+//        Toast.makeText(mContext, msg, Toast.LENGTH_LONG).show();
         Log.d("Updated Location:", msg);
+        Intent intent = new Intent(ACTION_BROADCAST);
+        intent.putExtra(EXTRA_LOCATION, location);
+        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
     }
 
 

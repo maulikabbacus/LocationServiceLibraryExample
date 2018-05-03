@@ -54,7 +54,8 @@ How to Use this library
 		
 		
 - in manifest file Add
- 		       <service
+ 			
+			<service
            		 android:name="abbacus.locationlibrary.LocationUpdateServiceBackground"
            		 android:exported="true"
            		 android:enabled="true"

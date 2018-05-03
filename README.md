@@ -32,17 +32,21 @@ How to Use this library
     }    
     
    - In oncreate()
+   
           myReceiver = new MyReceiver();
           
   -  In OnStartCommand or onResume       
-        LocalBroadcastManager.getInstance(this).registerReceiver(myReceiver,
-        new IntentFilter(LocationUpdateServiceBackground.ACTION_BROADCAST));
+  
+  		LocalBroadcastManager.getInstance(this).registerReceiver(myReceiver,
+        	new IntentFilter(LocationUpdateServiceBackground.ACTION_BROADCAST));
         
    - In onPause or onDestroy  
-   LocalBroadcastManager.getInstance(this).unregisterReceiver(myReceiver);     
+   
+   		LocalBroadcastManager.getInstance(this).unregisterReceiver(myReceiver);     
    
    - To Start service:
-            Intent ina = new Intent(MainActivity.this, LocationUpdateServiceBackground.class);
-            ina.putExtra("updateTimeInterval",1000);//in milliseconds(long data)
-            ina.putExtra("updateDistance",2f);//in meters(Float Data)
-            ina.putExtra("isDistanceRequired",false);//To enable minimum distance for location check
+            
+	    	Intent ina = new Intent(MainActivity.this, LocationUpdateServiceBackground.class);
+            	ina.putExtra("updateTimeInterval",1000);//in milliseconds(long data)
+            	ina.putExtra("updateDistance",2f);//in meters(Float Data)
+            	ina.putExtra("isDistanceRequired",false);//To enable minimum distance for location check

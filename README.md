@@ -51,3 +51,12 @@ How to Use this library
             	ina.putExtra("updateDistance",2f);//in meters(Float Data)
             	ina.putExtra("isDistanceRequired",false);//To enable minimum distance for location check
 	        startService(ina);
+		
+		
+- in manifest file
+ <service
+            android:name="abbacus.locationlibrary.LocationUpdateServiceBackground"
+            android:exported="true"
+            android:enabled="true"
+            android:stopWithTask="false"
+            />

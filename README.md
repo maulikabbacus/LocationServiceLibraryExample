@@ -50,3 +50,4 @@ How to Use this library
             	ina.putExtra("updateTimeInterval",1000);//in milliseconds(long data)
             	ina.putExtra("updateDistance",2f);//in meters(Float Data)
             	ina.putExtra("isDistanceRequired",false);//To enable minimum distance for location check
+	        startService(ina);

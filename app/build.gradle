@@ -1,6 +1,5 @@
 apply plugin: 'com.android.application'
-apply plugin: 'com.github.dcendents.android-maven'
-group='com.github.maulikabbacus'
+
 android {
     compileSdkVersion 26
     defaultConfig {
@@ -27,5 +26,6 @@ dependencies {
     androidTestImplementation 'com.android.support.test:runner:1.0.1'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
     implementation project(':locationlibrary')
+//    implementation 'com.github.maulikabbacus:LocationServiceLibraryExample:1.0'
     implementation 'com.android.support:design:26.1.0'
 }

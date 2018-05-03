@@ -26,8 +26,7 @@ import android.view.View;
 import android.widget.Button;
 
 import abbacus.locationlibrary.LocationUpdateServiceBackground;
-import abbacus.locationlibrary.demo.locationserviceexample.BuildConfig;
-import abbacus.locationlibrary.demo.locationserviceexample.R;
+
 
 
 /**

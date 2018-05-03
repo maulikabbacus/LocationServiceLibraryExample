@@ -26,7 +26,9 @@ import com.google.android.gms.tasks.Task;
 public class LocationUpdateServiceBackground extends Service {
     private static final String TAG = LocationUpdateServiceBackground.class.getSimpleName();
     private static  long UPDATE_INTERVAL_IN_MILLISECONDS = 1000;
-    private static  float UPDATE_INTERVAL_IN_DISTANCE = 0.01f; //minimum distance for location update in meter
+    private static  float UPDATE_INTERVAL_IN_DISTANCE = 1f; //minimum distance for location update in meter
+    private static  boolean IS_DISTANCE_REQUIRED = true; //minimum distance for location update in meter
+
     /**
      * The fastest rate for active location updates. Updates will never be more frequent
      * than this value.
@@ -69,14 +71,15 @@ public class LocationUpdateServiceBackground extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        startLocationUpdates();
+
         if(intent!=null&&!intent.getExtras().isEmpty())
         {
             UPDATE_INTERVAL_IN_MILLISECONDS=intent.getLongExtra("updateTimeInterval",1000);
             UPDATE_INTERVAL_IN_DISTANCE=intent.getFloatExtra("updateDistance",1f);
+            IS_DISTANCE_REQUIRED=intent.getBooleanExtra("isDistanceRequired",true);
             FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS=UPDATE_INTERVAL_IN_MILLISECONDS/2;
         }
-
+        startLocationUpdates();
         return START_REDELIVER_INTENT;
     }
 
@@ -88,7 +91,9 @@ public class LocationUpdateServiceBackground extends Service {
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         mLocationRequest.setInterval(UPDATE_INTERVAL_IN_MILLISECONDS);
         mLocationRequest.setFastestInterval(FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS);
-        mLocationRequest.setSmallestDisplacement(UPDATE_INTERVAL_IN_DISTANCE);
+        if(IS_DISTANCE_REQUIRED) {
+            mLocationRequest.setSmallestDisplacement(UPDATE_INTERVAL_IN_DISTANCE);
+        }
 //        mLocationRequest.setSmallestDisplacement(UPDATE_INTERVAL_IN_DISTANCE);
 
         // Create LocationSettingsRequest object using location request

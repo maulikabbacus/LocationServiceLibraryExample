@@ -42,16 +42,7 @@ import abbacus.locationlibrary.LocationUpdateServiceBackground;
  * Apps that use a foreground service -  which involves displaying a non-dismissable
  * notification -  can bypass the background location limits and request location updates as before.
  *
- * This sample uses a long-running bound and started service for location updates. The service is
- * aware of foreground status of this activity, which is the only bound client in
- * this sample. After requesting location updates, when the activity ceases to be in the foreground,
- * the service promotes itself to a foreground service and continues receiving location updates.
- * When the activity comes back to the foreground, the foreground service stops, and the
- * notification associated with that foreground service is removed.
- *
- * While the foreground service notification is displayed, the user has the option to launch the
- * activity from the notification. The user can also remove location updates directly from the
- * notification. This dismisses the notification and stops the service.
+
  */
 public class MainActivity extends AppCompatActivity implements
         SharedPreferences.OnSharedPreferenceChangeListener {
@@ -270,8 +261,9 @@ public class MainActivity extends AppCompatActivity implements
             mRequestLocationUpdatesButton.setEnabled(false);
             mRemoveLocationUpdatesButton.setEnabled(true);
             Intent ina = new Intent(MainActivity.this, LocationUpdateServiceBackground.class);
-            ina.putExtra("updateTimeInterval",1000l);
-            ina.putExtra("updateDistance",0.01f);
+            ina.putExtra("updateTimeInterval",1000);//in milliseconds
+            ina.putExtra("updateDistance",0.01f);//in meters
+            ina.putExtra("isDistanceRequired",false);//To enable minimum distance for location check
             startService(ina);
 
         }else

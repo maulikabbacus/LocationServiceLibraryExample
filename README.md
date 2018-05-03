@@ -53,13 +53,13 @@ How to Use this library
 	        startService(ina);
 		
 		
-- in manifest file
- <service
-            android:name="abbacus.locationlibrary.LocationUpdateServiceBackground"
-            android:exported="true"
-            android:enabled="true"
-            android:stopWithTask="false"
-            />
+- in manifest file Add
+ 		       <service
+           		 android:name="abbacus.locationlibrary.LocationUpdateServiceBackground"
+           		 android:exported="true"
+           		 android:enabled="true"
+            		android:stopWithTask="false"
+            		/>
 			
 			
 			

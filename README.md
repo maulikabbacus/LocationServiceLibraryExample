@@ -10,7 +10,7 @@ Add it in your root build.gradle at the end of repositories:
 Step 2. Add the dependency
 
 	dependencies {
-	        implementation 'com.github.maulikabbacus:LocationServiceLibraryExample:1.0.0'
+	        implementation 'com.github.maulikabbacus:LocationServiceLibraryExample:1.4
 	}
 
 
@@ -18,22 +18,29 @@ How to Use this library
 
 1> in your Activity or Service create Broadcast Receiver
     
-    private MyReceiver myReceiver;
+    private LocationChangeReceiver myReceiver;
     
-    private class MyReceiver extends BroadcastReceiver {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            Location location = intent.getParcelableExtra(LocationUpdateServiceBackground.EXTRA_LOCATION);
-            if (location != null) {
-                Toast.makeText(mContext,"From my new Service"+ location.getLatitude(),
-                        Toast.LENGTH_SHORT).show();
-            }
-        }
-    }    
+   public  class LocationChangeReceiver extends BroadcastReceiver {
+          public void onReceive(Context context, Intent intent) {
+              Location location = intent.getParcelableExtra(LocationUpdateServiceBackground.EXTRA_LOCATION);
+              String message = intent.getStringExtra(LocationUpdateServiceBackground.EXTRA_MESSAGE);
+              int status = intent.getIntExtra(LocationUpdateServiceBackground.EXTRA_STATUS, 0);
+              if (status == 1) {
+                  if (location != null) {
+                      Toast.makeText(context,"Changed",Toast.LENGTH_SHORT).show();
+                  }
+              } else {
+
+              }
+
+          }
+
+
+      }
     
    - In oncreate()
    
-          myReceiver = new MyReceiver();
+          myReceiver = new LocationChangeReceiver();
           
   -  In OnStartCommand or onResume       
   

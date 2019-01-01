@@ -13,4 +13,6 @@
     <string name="remove_location_updates">Remove location updates</string>
 
     <string name="location_updated">Location Updated: %1$s</string>
+    <string name="google_map_api_key">AIzaSyD6WSh1eW7NFrgK88ZgnvZT3YyTM37pRMg</string>
+
 </resources>

@@ -33,7 +33,7 @@ import com.google.android.gms.tasks.Task;
 public class LocationUpdateServiceBackground extends Service {
     private static final String TAG = LocationUpdateServiceBackground.class.getSimpleName();
     private long UPDATE_INTERVAL_IN_MILLISECONDS = 1000;
-    private float UPDATE_INTERVAL_IN_DISTANCE = 1f; //minimum distance for location update in meter
+    private float UPDATE_INTERVAL_IN_DISTANCE = 0f; //minimum distance for location update in meter
     private boolean IS_DISTANCE_REQUIRED = true; //minimum distance for location update in meter
     private boolean startServiceFlag = true;
     private String title = "";

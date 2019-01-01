@@ -41,5 +41,12 @@
         android:layout_marginTop="20dp"
         android:textColor="#000000"
         android:text="jsdhfh"
+        android:visibility="gone"
+        />
+    <com.google.android.gms.maps.MapView
+        android:id="@+id/mapView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+
         />
 </LinearLayout>

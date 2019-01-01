@@ -25,16 +25,10 @@ public class MyApplication extends Application {
         super.onCreate();
         appInstance = this;
 
-            registerLocationChangeReceiver();
 
 
     }
 
-    private void registerLocationChangeReceiver()
-    {
-            MainActivity.LocationChangeReceiver mReceiver=new MainActivity.LocationChangeReceiver();
-            registerReceiver(mReceiver, new IntentFilter(LocationUpdateServiceBackground.ACTION_BROADCAST));
-    }
 
 
 }

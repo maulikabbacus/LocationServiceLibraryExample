@@ -1,14 +1,25 @@
 package abbacus.locationlibrary.demo;
 
 
+import android.animation.ValueAnimator;
+import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Build;
+
+import android.os.Handler;
 import android.preference.PreferenceManager;
+import android.support.annotation.DrawableRes;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -25,10 +36,23 @@ import android.support.annotation.NonNull;
 
 import android.support.v4.app.ActivityCompat;
 
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.animation.LinearInterpolator;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapView;
+import com.google.android.gms.maps.MapsInitializer;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 
 import org.w3c.dom.Text;
 
@@ -43,39 +67,56 @@ import abbacus.locationlibrary.LocationUpdateServiceBackground;
  * Apps that use a foreground service -  which involves displaying a non-dismissable
  * notification -  can bypass the background location limits and request location updates as before.
  */
-public class MainActivity extends AppCompatActivity implements
-        SharedPreferences.OnSharedPreferenceChangeListener {
+public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getSimpleName();
 
     // Used in checking for runtime permissions.
     private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 34;
 
-    // The BroadcastReceiver used to listen from broadcasts from the service.
-//    private MyReceiver myReceiver;
-
-    // A reference to the service used to get location updates.
-//    private LocationUpdatesService mService = null;
-//    private LocationUpdateServiceBackground mServiceBG = null;
-    // Tracks the bound state of the service.
     private boolean mBound = false;
 
     // UI elements.
     private Button mRequestLocationUpdatesButton;
     private Button mRemoveLocationUpdatesButton;
-    static TextView tvLocation;
+    TextView tvLocation;
+    private Handler handler1;
 
+    MapView mapView;
+    GoogleMap googleMap;
+    private Marker marker, userPositionMarker;
+    boolean cameraAnimated = false;
+    private ValueAnimator valueAnimator;
+    long animationDuration = 3000;
+    int minDistanceForAnimation = 2;
+    private float v;
+    private double lng;
+    private double lat,temp=0.0001;
+    private static  int ZOOM_LEVEL = 16;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        mapView = (MapView) findViewById(R.id.mapView);
+        mapView.onCreate(savedInstanceState);
+        mapView.onResume();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (googleMap != null) {
+            if (cameraAnimated) {
+                handler1 = null;
+                mapView.setVisibility(View.VISIBLE);
+            }
+
+        }
 
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-        PreferenceManager.getDefaultSharedPreferences(this)
-                .registerOnSharedPreferenceChangeListener(this);
 
         mRequestLocationUpdatesButton = (Button) findViewById(R.id.request_location_updates_button);
         mRemoveLocationUpdatesButton = (Button) findViewById(R.id.remove_location_updates_button);
@@ -104,6 +145,22 @@ public class MainActivity extends AppCompatActivity implements
             }
         });
 
+        MapsInitializer.initialize(this);
+
+
+        mapView.getMapAsync(new OnMapReadyCallback() {
+            @SuppressLint("MissingPermission")
+            @Override
+            public void onMapReady(GoogleMap mMap) {
+                googleMap = mMap;
+                if(checkPermissions()) {
+                    googleMap.setMyLocationEnabled(true);
+                    googleMap.getUiSettings().setMyLocationButtonEnabled(true);
+                }
+                registerLocationChangeReceiver();
+            }
+        });
+
     }
 
     private void stopLocationService() {
@@ -112,12 +169,6 @@ public class MainActivity extends AppCompatActivity implements
         stopService(ina);
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-//        LocalBroadcastManager.getInstance(this).registerReceiver(myReceiver,
-//                new IntentFilter(LocationUpdateServiceBackground.ACTION_BROADCAST));
-    }
 
     @Override
     protected void onPause() {
@@ -131,7 +182,6 @@ public class MainActivity extends AppCompatActivity implements
 
             mBound = false;
         }
-
         super.onStop();
     }
 
@@ -224,8 +274,8 @@ public class MainActivity extends AppCompatActivity implements
             mRequestLocationUpdatesButton.setEnabled(false);
             mRemoveLocationUpdatesButton.setEnabled(true);
             Intent ina = new Intent(MainActivity.this, LocationUpdateServiceBackground.class);
-            ina.putExtra(LocationUpdateServiceBackground.UPDATE_INTERVAL, 3000);//in milliseconds
-            ina.putExtra(LocationUpdateServiceBackground.UPDATE_DISTANCE, 0.01f);//in meters
+            ina.putExtra(LocationUpdateServiceBackground.UPDATE_INTERVAL, 2000L);//in milliseconds
+            ina.putExtra(LocationUpdateServiceBackground.UPDATE_DISTANCE, 10f);//in meters
             ina.putExtra(LocationUpdateServiceBackground.IS_DISTANCE_REQUIRED_FLAG, false);//To enable minimum distance for location check
             ina.putExtra(LocationUpdateServiceBackground.START_SERVICE_FLAG, true);//To start or stop service
             ina.putExtra(LocationUpdateServiceBackground.NOTIFICATION_TITLE, "Demo");//Title of foreground notification
@@ -259,26 +309,6 @@ public class MainActivity extends AppCompatActivity implements
         return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
     }
 
-    /**
-     */
-//    private class MyReceiver extends BroadcastReceiver {
-//        @Override
-//        public void onReceive(Context context, Intent intent) {
-//            Location location = intent.getParcelableExtra(LocationUpdateServiceBackground.EXTRA_LOCATION);
-//            if (location != null) {
-//                Toast.makeText(MainActivity.this, (int) location.getLatitude(),
-//                        Toast.LENGTH_SHORT).show();
-//            }
-//        }
-//    }
-    @Override
-    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
-        // Update the buttons state depending on whether location updates are being requested.
-//        if (s.equals(Utils.KEY_REQUESTING_LOCATION_UPDATES)) {
-//            setButtonsState(sharedPreferences.getBoolean(Utils.KEY_REQUESTING_LOCATION_UPDATES,
-//                    false));
-//        }
-    }
 
     private void setButtonsState(boolean requestingLocationUpdates) {
         if (requestingLocationUpdates) {
@@ -290,22 +320,126 @@ public class MainActivity extends AppCompatActivity implements
         }
     }
 
-    public static class LocationChangeReceiver extends BroadcastReceiver {
+    private void registerLocationChangeReceiver() {
+        LocationChangeReceiver mReceiver = new LocationChangeReceiver();
+        registerReceiver(mReceiver, new IntentFilter(LocationUpdateServiceBackground.ACTION_BROADCAST));
+    }
+
+    public class LocationChangeReceiver extends BroadcastReceiver {
         public void onReceive(Context context, Intent intent) {
             Location location = intent.getParcelableExtra(LocationUpdateServiceBackground.EXTRA_LOCATION);
             String message = intent.getStringExtra(LocationUpdateServiceBackground.EXTRA_MESSAGE);
             int status = intent.getIntExtra(LocationUpdateServiceBackground.EXTRA_STATUS, 0);
             if (status == 1) {
-                if (location != null) {
-                    tvLocation.setText(location.getLatitude() + "\n" + location.getLongitude());
+                if (location != null)
+                {
+                    temp+=0.0001;
+                    location.setLatitude(location.getLatitude()+temp);
+                    location.setLongitude(location.getLongitude()+temp);
+                    updateMapMarkerPosition(location);
                 }
             } else {
                 tvLocation.setText(message);
             }
 
         }
+    }
 
+    private void updateMapMarkerPosition(final Location location)
+    {
+        try
+        {
+            temp+=0.0001;
+                Debug.trace("Receiver" + location.getLatitude() + "," + location.getLongitude());
+                if (location != null) {
+                    if (handler1 != null) {
+                        handler1.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                final LatLng endPosition = new LatLng(location.getLatitude(), location.getLongitude());
+                                if (marker == null) {
+                                    marker = googleMap.addMarker(new MarkerOptions().position(endPosition).title("Demo").icon(BitmapDescriptorFactory.fromBitmap(getMarkerBitmapFromView(R.drawable.marker))));
+                                }
+
+                                final LatLng startPosition = marker.getPosition();
+
+                                Location startLocation = new Location("A");
+                                startLocation.setLatitude(startPosition.latitude);
+                                startLocation.setLongitude(startPosition.longitude);
+
+                                Location endLocation = new Location("B");
+                                endLocation.setLatitude(endPosition.latitude);
+                                endLocation.setLongitude(endPosition.longitude);
+                                double distance = startLocation.distanceTo(endLocation);
+                                if (distance > 1) {
+                                    valueAnimator = ValueAnimator.ofFloat(0, 1);
+                                    valueAnimator.setDuration(animationDuration); //dg
+                                    valueAnimator.setInterpolator(new LinearInterpolator());
+                                    valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                                        @Override
+                                        public void onAnimationUpdate(ValueAnimator valueAnimator) {
+
+                                            v = (float) valueAnimator.getAnimatedValue();
+                                            lng = v * endPosition.longitude + (1 - v) * startPosition.longitude;
+                                            lat = v * endPosition.latitude + (1 - v) * startPosition.latitude;
+                                            LatLng newPos = new LatLng(lat, lng);
+                                            marker.setPosition(newPos);
+
+                                        }
+                                    });
+                                    valueAnimator.start();
+                                }
+                            }
+                        }, 16);
+                    } else {
+                        final LatLng sydney1 = new LatLng(location.getLatitude(), location.getLongitude());
+                        if (marker == null) {
+                            marker = googleMap.addMarker(new MarkerOptions().position(sydney1).title("Demo").icon(BitmapDescriptorFactory.fromBitmap(getMarkerBitmapFromView(R.drawable.marker))));
+                        } else {
+                            marker.setPosition(sydney1);
+                        }
+                        googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(sydney1, ZOOM_LEVEL), (int) 2000, new GoogleMap.CancelableCallback() {
+                            @Override
+                            public void onFinish() {
+                                //Here you can take the snapshot or whatever you want
+                                cameraAnimated = true;
+                            }
+
+                            @Override
+                            public void onCancel() {
+
+                            }
+                        });
+                        handler1 = new Handler();
+                    }
+                }
+
+        }
+        catch (Exception ex)
+        {
+            Debug.trace(ex.toString());
+        }
 
     }
+
+    private Bitmap getMarkerBitmapFromView(@DrawableRes int resId) {
+
+        View customMarkerView = ((LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE)).inflate(R.layout.marker_icon, null);
+        ImageView markerImageView = (ImageView) customMarkerView.findViewById(R.id.marker_image);
+        markerImageView.setImageResource(resId);
+        customMarkerView.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
+        customMarkerView.layout(0, 0, customMarkerView.getMeasuredWidth(), customMarkerView.getMeasuredHeight());
+        customMarkerView.buildDrawingCache();
+        Bitmap returnedBitmap = Bitmap.createBitmap(customMarkerView.getMeasuredWidth(), customMarkerView.getMeasuredHeight(),
+                Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(returnedBitmap);
+        canvas.drawColor(Color.WHITE, PorterDuff.Mode.SRC_IN);
+        Drawable drawable = customMarkerView.getBackground();
+        if (drawable != null)
+            drawable.draw(canvas);
+        customMarkerView.draw(canvas);
+        return returnedBitmap;
+    }
+
 
 }

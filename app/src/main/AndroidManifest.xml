@@ -12,7 +12,9 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme">
+        android:theme="@style/AppTheme"
+        android:name=".MyApplication"
+        >
         <activity android:name="abbacus.locationlibrary.demo.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -26,13 +28,7 @@
             android:enabled="true"
             android:stopWithTask="false"
             />
-        <service
-            android:name="abbacus.locationlibrary.demo.locationReceiverService"
-            android:enabled="true"
-            android:exported="true"
 
-            android:stopWithTask="false"
-            />
 
     </application>
 

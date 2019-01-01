@@ -33,4 +33,13 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/remove_location_updates" />
+
+    <TextView
+        android:id="@+id/tv_location"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:textColor="#000000"
+        android:text="jsdhfh"
+        />
 </LinearLayout>

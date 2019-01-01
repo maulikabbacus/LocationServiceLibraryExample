@@ -4,13 +4,12 @@ package abbacus.locationlibrary.demo;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.location.Location;
 import android.location.LocationManager;
+import android.os.Build;
 import android.preference.PreferenceManager;
 import android.support.design.widget.Snackbar;
-import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -28,21 +27,21 @@ import android.support.v4.app.ActivityCompat;
 
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
+
+import org.w3c.dom.Text;
 
 import abbacus.locationlibrary.LocationUpdateServiceBackground;
 
 
-
 /**
  * The only activity in this sample.
- *
+ * <p>
  * Note: for apps running in the background on "O" devices (regardless of the targetSdkVersion),
  * location may be computed less frequently than requested when the app is not in the foreground.
  * Apps that use a foreground service -  which involves displaying a non-dismissable
  * notification -  can bypass the background location limits and request location updates as before.
- *
-
  */
 public class MainActivity extends AppCompatActivity implements
         SharedPreferences.OnSharedPreferenceChangeListener {
@@ -59,44 +58,17 @@ public class MainActivity extends AppCompatActivity implements
 //    private LocationUpdateServiceBackground mServiceBG = null;
     // Tracks the bound state of the service.
     private boolean mBound = false;
-    private MyReceiver myReceiver;
+
     // UI elements.
     private Button mRequestLocationUpdatesButton;
     private Button mRemoveLocationUpdatesButton;
+    static TextView tvLocation;
 
-    // Monitors the state of the connection to the service.
-//    private final ServiceConnection mServiceConnection = new ServiceConnection() {
-//
-//        @Override
-//        public void onServiceConnected(ComponentName name, IBinder service) {
-////            LocationUpdateServiceBackground.LocalBinder binder = (LocationUpdatesService.LocalBinder) service;
-////            mService = binder.getService();
-//            mBound = true;
-//        }
-//
-//        @Override
-//        public void onServiceDisconnected(ComponentName name) {
-////            mService = null;
-//            mBound = false;
-//        }
-//    };
-    private class MyReceiver extends BroadcastReceiver {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            Location location = intent.getParcelableExtra(LocationUpdateServiceBackground.EXTRA_LOCATION);
-            if (location != null) {
-                Toast.makeText(MainActivity.this,""+ location.getLatitude(),
-                        Toast.LENGTH_SHORT).show();
-            }
-        }
-    }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-//       myReceiver = new MyReceiver();
         setContentView(R.layout.activity_main);
-        Intent ina =new Intent(MainActivity.this,locationReceiverService.class);
-        startService(ina);
+
     }
 
     @Override
@@ -107,15 +79,14 @@ public class MainActivity extends AppCompatActivity implements
 
         mRequestLocationUpdatesButton = (Button) findViewById(R.id.request_location_updates_button);
         mRemoveLocationUpdatesButton = (Button) findViewById(R.id.remove_location_updates_button);
+        tvLocation = (TextView) findViewById(R.id.tv_location);
 
         mRequestLocationUpdatesButton.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view)
-            {
+            public void onClick(View view) {
                 if (!checkPermissions()) {
                     requestPermissions();
-                }
-                else {
+                } else {
                     startServiceIntent();
 
                 }
@@ -129,20 +100,16 @@ public class MainActivity extends AppCompatActivity implements
 //              mService.removeLocationUpdates();
                 mRequestLocationUpdatesButton.setEnabled(true);
                 mRemoveLocationUpdatesButton.setEnabled(false);
-                Intent ina=new Intent(MainActivity.this,LocationUpdateServiceBackground.class);
-
-                stopService(ina);
-
+                stopLocationService();
             }
         });
 
-        // Restore the state of the buttons when the activity (re)launches.
-//        setButtonsState(Utils.requestingLocationUpdates(this));
+    }
 
-        // Bind to the service. If the service is in foreground mode, this signals to the service
-        // that since this activity is in the foreground, the service can exit foreground mode.
-//        bindService(new Intent(this, LocationUpdatesService.class), mServiceConnection,
-//                Context.BIND_AUTO_CREATE);
+    private void stopLocationService() {
+        Intent ina = new Intent(MainActivity.this, LocationUpdateServiceBackground.class);
+        ina.putExtra(LocationUpdateServiceBackground.START_SERVICE_FLAG, false);
+        stopService(ina);
     }
 
     @Override
@@ -161,14 +128,10 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     protected void onStop() {
         if (mBound) {
-            // Unbind from the service. This signals to the service that this activity is no longer
-            // in the foreground, and the service can respond by promoting itself to a foreground
-            // service.
-//            unbindService(mServiceConnection);
+
             mBound = false;
         }
-//        PreferenceManager.getDefaultSharedPreferences(this)
-//                .unregisterOnSharedPreferenceChangeListener(this);
+
         super.onStop();
     }
 
@@ -176,7 +139,7 @@ public class MainActivity extends AppCompatActivity implements
      * Returns the current state of the permissions needed.
      */
     private boolean checkPermissions() {
-        return  PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(this,
+        return PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(this,
                 Manifest.permission.ACCESS_FINE_LOCATION);
     }
 
@@ -257,39 +220,45 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     private void startServiceIntent() {
-        if(CheckGpsStatus()) {
+        if (CheckGpsStatus()) {
             mRequestLocationUpdatesButton.setEnabled(false);
             mRemoveLocationUpdatesButton.setEnabled(true);
             Intent ina = new Intent(MainActivity.this, LocationUpdateServiceBackground.class);
-            ina.putExtra("updateTimeInterval",1000);//in milliseconds
-            ina.putExtra("updateDistance",0.01f);//in meters
-            ina.putExtra("isDistanceRequired",false);//To enable minimum distance for location check
-            startService(ina);
+            ina.putExtra(LocationUpdateServiceBackground.UPDATE_INTERVAL, 3000);//in milliseconds
+            ina.putExtra(LocationUpdateServiceBackground.UPDATE_DISTANCE, 0.01f);//in meters
+            ina.putExtra(LocationUpdateServiceBackground.IS_DISTANCE_REQUIRED_FLAG, false);//To enable minimum distance for location check
+            ina.putExtra(LocationUpdateServiceBackground.START_SERVICE_FLAG, true);//To start or stop service
+            ina.putExtra(LocationUpdateServiceBackground.NOTIFICATION_TITLE, "Demo");//Title of foreground notification
+            ina.putExtra(LocationUpdateServiceBackground.NOTIFICATION_MESSAGE, "Location");//Message for foreground notification
+            ina.putExtra(LocationUpdateServiceBackground.NOTIFICATION_ICON, R.mipmap.ic_launcher_round);//Message for foreground notification
+            ina.putExtra(LocationUpdateServiceBackground.NOTIFICATION_SMALLICON, R.mipmap.ic_launcher_round);//Message for foreground notification
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(ina);
+            } else {
+                startService(ina);
+            }
 
-        }else
-        {
-
+        } else {
             startActivityForResult(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS), 1);
-
         }
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        switch (requestCode)
-        {
+        switch (requestCode) {
             case 1:
                 startServiceIntent();
                 break;
         }
     }
 
-    public boolean CheckGpsStatus(){
+    public boolean CheckGpsStatus() {
 
-        LocationManager locationManager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
+        LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
     }
+
     /**
      */
 //    private class MyReceiver extends BroadcastReceiver {
@@ -302,7 +271,6 @@ public class MainActivity extends AppCompatActivity implements
 //            }
 //        }
 //    }
-
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
         // Update the buttons state depending on whether location updates are being requested.
@@ -321,4 +289,23 @@ public class MainActivity extends AppCompatActivity implements
             mRemoveLocationUpdatesButton.setEnabled(false);
         }
     }
+
+    public static class LocationChangeReceiver extends BroadcastReceiver {
+        public void onReceive(Context context, Intent intent) {
+            Location location = intent.getParcelableExtra(LocationUpdateServiceBackground.EXTRA_LOCATION);
+            String message = intent.getStringExtra(LocationUpdateServiceBackground.EXTRA_MESSAGE);
+            int status = intent.getIntExtra(LocationUpdateServiceBackground.EXTRA_STATUS, 0);
+            if (status == 1) {
+                if (location != null) {
+                    tvLocation.setText(location.getLatitude() + "\n" + location.getLongitude());
+                }
+            } else {
+                tvLocation.setText(message);
+            }
+
+        }
+
+
+    }
+
 }

@@ -47,10 +47,19 @@ How to Use this library
    - To Start service:
             
 	    	Intent ina = new Intent(MainActivity.this, LocationUpdateServiceBackground.class);
-            	ina.putExtra("updateTimeInterval",1000);//in milliseconds(long data)
-            	ina.putExtra("updateDistance",2f);//in meters(Float Data)
-            	ina.putExtra("isDistanceRequired",false);//To enable minimum distance for location check
-	        startService(ina);
+                        ina.putExtra(LocationUpdateServiceBackground.UPDATE_INTERVAL, 3000);//in milliseconds
+                        ina.putExtra(LocationUpdateServiceBackground.UPDATE_DISTANCE, 0.01f);//in meters
+                        ina.putExtra(LocationUpdateServiceBackground.IS_DISTANCE_REQUIRED_FLAG, false);//To enable minimum distance for location check
+                        ina.putExtra(LocationUpdateServiceBackground.START_SERVICE_FLAG, true);//To start or stop service
+                        ina.putExtra(LocationUpdateServiceBackground.NOTIFICATION_TITLE, "Demo");//Title of foreground notification
+                        ina.putExtra(LocationUpdateServiceBackground.NOTIFICATION_MESSAGE, "Location");//Message for foreground notification
+                        ina.putExtra(LocationUpdateServiceBackground.NOTIFICATION_ICON, R.mipmap.ic_launcher_round);//Icon for foreground notification
+                        ina.putExtra(LocationUpdateServiceBackground.NOTIFICATION_SMALLICON, R.mipmap.ic_launcher_round);//Small icon for foreground notification
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            startForegroundService(ina);
+                        } else {
+                            startService(ina);
+                        }
 		
 		
 - in manifest file Add
